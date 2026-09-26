@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HR KPI Dashboard</title>
-<meta name="description" content="Monthly HR and People KPIs: headcount, turnover, time to hire, absenteeism, eNPS and training hours.">
+<meta name="description" content="Monthly HR and People KPIs with targets: headcount, turnover, time to hire, absenteeism, eNPS and training hours. English / Español.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -21,6 +21,7 @@
   --good: #2e7d4f;
   --bad: #b3452f;
   --neutral: #8a867c;
+  --target: #b07a1f;
   --shadow: 0 1px 2px rgba(0,0,0,.04), 0 2px 8px rgba(0,0,0,.04);
 }
 @media (prefers-color-scheme: dark) {
@@ -36,6 +37,7 @@
     --good: #6fc392;
     --bad: #e88a74;
     --neutral: #8f8b82;
+    --target: #e0b25c;
     --shadow: none;
   }
 }
@@ -51,6 +53,7 @@
   --good: #6fc392;
   --bad: #e88a74;
   --neutral: #8f8b82;
+  --target: #e0b25c;
   --shadow: none;
 }
 * { box-sizing: border-box; }
@@ -66,7 +69,10 @@ body {
 header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 h1 { font-size: 26px; margin: 0; letter-spacing: -0.02em; }
 .sub { color: var(--muted); margin: 4px 0 0; }
-.month-pick { display: flex; align-items: center; gap: 8px; }
+.controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.lang { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.lang button { border: none; border-radius: 0; padding: 7px 12px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.lang button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
 select, input, button { font: inherit; color: inherit; }
 select, input[type="number"], input[type="month"] {
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
@@ -80,19 +86,23 @@ button:hover { background: var(--surface-2); }
 button.primary { background: var(--accent); border-color: var(--accent); color: var(--bg); font-weight: 600; }
 button.primary:hover { filter: brightness(1.08); }
 button.link { border: none; background: none; padding: 4px 6px; color: var(--muted); }
-button.link:hover { color: var(--bad); background: none; }
+button.link:hover { color: var(--accent); background: none; }
+button.link.danger:hover { color: var(--bad); }
 
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
 .card {
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
   padding: 16px; box-shadow: var(--shadow); text-align: left; cursor: pointer; width: 100%;
+  display: flex; flex-direction: column; gap: 2px;
 }
 .card:hover { background: var(--surface); border-color: var(--accent); }
 .card.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .card .label { color: var(--muted); font-size: 13px; font-weight: 500; }
-.card .value { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
-.card .delta { font-size: 13px; font-variant-numeric: tabular-nums; }
-.delta.good { color: var(--good); } .delta.bad { color: var(--bad); } .delta.flat { color: var(--neutral); }
+.card .value { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.card .delta, .card .tgt { font-size: 13px; font-variant-numeric: tabular-nums; }
+.card .tgt { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--border); color: var(--muted); }
+.good { color: var(--good); } .bad { color: var(--bad); } .flat { color: var(--neutral); }
+.pill { display: inline-block; font-weight: 600; }
 
 section.panel {
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
@@ -102,13 +112,17 @@ section.panel {
 .panel .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
 .chart svg { width: 100%; height: auto; display: block; }
 .chart text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-top: 8px; }
+.legend span::before { content: ""; display: inline-block; width: 14px; height: 0; border-top: 2.5px solid var(--accent); vertical-align: middle; margin-right: 6px; }
+.legend span.t::before { border-top: 2px dashed var(--target); }
 
 form .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px 16px; }
 fieldset { border: none; padding: 0; margin: 0 0 16px; }
 legend { font-weight: 600; font-size: 13px; margin-bottom: 8px; color: var(--accent); }
 label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
 label input { color: var(--text); }
-.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.saved { font-size: 13px; color: var(--good); }
 
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 14px; }
@@ -132,134 +146,294 @@ details dt { font-weight: 600; } details dd { margin: 0; color: var(--muted); }
 <div class="wrap">
   <header>
     <div>
-      <h1>HR KPI Dashboard</h1>
-      <p class="sub">Monthly people metrics, calculated from the numbers you enter.</p>
+      <h1 data-i18n="title"></h1>
+      <p class="sub" data-i18n="subtitle"></p>
     </div>
-    <div class="month-pick" id="monthPick" hidden>
-      <label for="monthSelect" style="flex-direction:row;align-items:center;gap:8px">Month
+    <div class="controls">
+      <label id="monthPick" hidden style="flex-direction:row;align-items:center;gap:8px">
+        <span data-i18n="month"></span>
         <select id="monthSelect"></select>
       </label>
+      <div class="lang" role="group" aria-label="Language / Idioma">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="es">ES</button>
+      </div>
     </div>
   </header>
 
   <div id="app"></div>
 
   <section class="panel">
-    <h2 id="formTitle">Add a month</h2>
-    <p class="hint">Enter raw numbers. The dashboard works out the rates. If you enter a month that already exists, it gets overwritten.</p>
-    <form id="entryForm">
-      <fieldset>
-        <legend>Period</legend>
-        <div class="fields">
-          <label>Month <input type="month" name="month" required></label>
-        </div>
-      </fieldset>
-      <fieldset>
-        <legend>Headcount &amp; movement</legend>
-        <div class="fields">
-          <label>Headcount at start of month <input type="number" name="startHC" min="0" required></label>
-          <label>Headcount at end of month <input type="number" name="endHC" min="0" required></label>
-          <label>New hires <input type="number" name="hires" min="0" value="0"></label>
-          <label>Total leavers <input type="number" name="leavers" min="0" value="0"></label>
-          <label>…of which voluntary <input type="number" name="volLeavers" min="0" value="0"></label>
-          <label>Avg. days to hire (vacancy opened → offer accepted) <input type="number" name="daysToHire" min="0" step="0.1"></label>
-        </div>
-      </fieldset>
-      <fieldset>
-        <legend>Absence &amp; development</legend>
-        <div class="fields">
-          <label>Hours absent <input type="number" name="absentHours" min="0" step="0.5" value="0"></label>
-          <label>Hours scheduled to work <input type="number" name="scheduledHours" min="0" step="0.5"></label>
-          <label>Total training hours <input type="number" name="trainingHours" min="0" step="0.5" value="0"></label>
-        </div>
-      </fieldset>
-      <fieldset>
-        <legend>eNPS survey (leave blank if no survey this month)</legend>
-        <div class="fields">
-          <label>Promoters (9–10) <input type="number" name="promoters" min="0"></label>
-          <label>Passives (7–8) <input type="number" name="passives" min="0"></label>
-          <label>Detractors (0–6) <input type="number" name="detractors" min="0"></label>
-        </div>
-      </fieldset>
-      <div class="actions">
-        <button type="submit" class="primary">Save month</button>
-        <button type="reset">Clear form</button>
+    <h2 data-i18n="targetsTitle"></h2>
+    <p class="hint" data-i18n="targetsHint"></p>
+    <form id="targetsForm">
+      <div class="fields" id="targetFields"></div>
+      <div class="actions" style="margin-top:16px">
+        <button type="submit" class="primary" data-i18n="saveTargets"></button>
+        <span class="saved" id="targetsSaved" hidden data-i18n="saved"></span>
       </div>
     </form>
   </section>
 
   <section class="panel">
-    <h2>History</h2>
-    <p class="hint">Your data is saved only in this browser. Export it as a backup, or to move it to another computer.</p>
+    <h2 id="formTitle"></h2>
+    <p class="hint" data-i18n="formHint"></p>
+    <form id="entryForm">
+      <fieldset>
+        <legend data-i18n="lgPeriod"></legend>
+        <div class="fields">
+          <label><span data-i18n="month"></span> <input type="month" name="month" required></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend data-i18n="lgMovement"></legend>
+        <div class="fields">
+          <label><span data-i18n="fStartHC"></span> <input type="number" name="startHC" min="0" required></label>
+          <label><span data-i18n="fEndHC"></span> <input type="number" name="endHC" min="0" required></label>
+          <label><span data-i18n="fHires"></span> <input type="number" name="hires" min="0" value="0"></label>
+          <label><span data-i18n="fLeavers"></span> <input type="number" name="leavers" min="0" value="0"></label>
+          <label><span data-i18n="fVolLeavers"></span> <input type="number" name="volLeavers" min="0" value="0"></label>
+          <label><span data-i18n="fDaysToHire"></span> <input type="number" name="daysToHire" min="0" step="0.1"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend data-i18n="lgAbsence"></legend>
+        <div class="fields">
+          <label><span data-i18n="fAbsentHours"></span> <input type="number" name="absentHours" min="0" step="0.5" value="0"></label>
+          <label><span data-i18n="fScheduledHours"></span> <input type="number" name="scheduledHours" min="0" step="0.5"></label>
+          <label><span data-i18n="fTrainingHours"></span> <input type="number" name="trainingHours" min="0" step="0.5" value="0"></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend data-i18n="lgEnps"></legend>
+        <div class="fields">
+          <label><span data-i18n="fPromoters"></span> <input type="number" name="promoters" min="0"></label>
+          <label><span data-i18n="fPassives"></span> <input type="number" name="passives" min="0"></label>
+          <label><span data-i18n="fDetractors"></span> <input type="number" name="detractors" min="0"></label>
+        </div>
+      </fieldset>
+      <div class="actions">
+        <button type="submit" class="primary" data-i18n="saveMonth"></button>
+        <button type="reset" data-i18n="clearForm"></button>
+      </div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2 data-i18n="historyTitle"></h2>
+    <p class="hint" data-i18n="historyHint"></p>
     <div class="table-wrap" id="history"></div>
     <div class="actions" style="margin-top:16px">
-      <button type="button" id="exportBtn">Export data (.json)</button>
-      <button type="button" id="importBtn">Import data</button>
+      <button type="button" id="exportBtn" data-i18n="export"></button>
+      <button type="button" id="importBtn" data-i18n="import"></button>
       <input type="file" id="importFile" accept="application/json" hidden>
     </div>
   </section>
 
   <section class="panel">
     <details>
-      <summary>How each KPI is calculated</summary>
-      <dl>
-        <dt>Average headcount</dt><dd>(start + end) ÷ 2. This is the denominator for turnover and training rates.</dd>
-        <dt>Turnover rate</dt><dd>Total leavers ÷ average headcount × 100, for that month. Multiply by roughly 12 to get an annualised figure.</dd>
-        <dt>Voluntary turnover</dt><dd>Voluntary leavers ÷ average headcount × 100. This isolates resignations from dismissals, contract ends and retirements.</dd>
-        <dt>Time to hire</dt><dd>The average number of days you enter, from vacancy opened to offer accepted.</dd>
-        <dt>Absenteeism rate</dt><dd>Hours absent ÷ hours scheduled × 100. Decide once which absence types count (e.g. sick leave yes, holidays and statutory leave such as birth leave no) and keep that consistent.</dd>
-        <dt>eNPS</dt><dd>% promoters − % detractors. Range −100 to +100.</dd>
-        <dt>Training hours / employee</dt><dd>Total training hours ÷ average headcount.</dd>
-      </dl>
+      <summary data-i18n="howTitle"></summary>
+      <dl id="howList"></dl>
     </details>
   </section>
 
-  <p class="note">Enter aggregated numbers only, never names or individual data. Very small teams can make individuals identifiable even from totals (for example, one leaver in a team of four), so keep that in mind if you share the dashboard (GDPR / LOPDGDD).</p>
+  <p class="note" data-i18n="privacy"></p>
 </div>
 
 <script>
 const STORE_KEY = 'hr-kpi-dashboard-v1';
+const TARGET_KEY = 'hr-kpi-targets-v1';
+const LANG_KEY = 'hr-kpi-lang';
 
+const T = {
+  en: {
+    title: 'HR KPI Dashboard',
+    subtitle: 'Monthly people metrics, calculated from the numbers you enter.',
+    month: 'Month',
+    kpi_headcount: 'Headcount', kpi_turnover: 'Turnover rate', kpi_volTurnover: 'Voluntary turnover',
+    kpi_timeToHire: 'Time to hire', kpi_absenteeism: 'Absenteeism rate', kpi_enps: 'eNPS', kpi_training: 'Training hrs / employee',
+    days: 'days', day: 'day', pp: 'pp',
+    vs: 'vs', noEarlier: 'No earlier data',
+    target: 'Target', noTarget: 'No target set',
+    onTarget: 'On target', offBy: '{d} off target',
+    atTarget: 'At plan',
+    emptyTitle: 'No data yet',
+    emptyText: 'Add your first month below, or load six months of sample data to see how the dashboard works. You can delete the sample data later.',
+    loadSample: 'Load sample data',
+    trend: '{k}: trend', trendHint: 'Click any KPI card to chart it.',
+    needTwo: 'You need at least two months with this KPI to show a trend.',
+    legendActual: 'Actual', legendTarget: 'Target',
+    targetsTitle: 'Targets',
+    targetsHint: 'Set the goal for each KPI. Cards turn green when you meet it and red when you miss it. Leave blank for no target. For headcount, enter the planned headcount; the gap is shown without a good/bad colour.',
+    saveTargets: 'Save targets', saved: 'Saved ✓',
+    tMax: 'max', tMin: 'min', tPlan: 'plan',
+    addMonth: 'Add a month', editMonth: 'Edit {m}',
+    formHint: 'Enter raw numbers. The dashboard works out the rates. If you enter a month that already exists, it gets overwritten.',
+    lgPeriod: 'Period', lgMovement: 'Headcount & movement', lgAbsence: 'Absence & development',
+    lgEnps: 'eNPS survey (leave blank if no survey this month)',
+    fStartHC: 'Headcount at start of month', fEndHC: 'Headcount at end of month', fHires: 'New hires',
+    fLeavers: 'Total leavers', fVolLeavers: '…of which voluntary',
+    fDaysToHire: 'Avg. days to hire (vacancy opened → offer accepted)',
+    fAbsentHours: 'Hours absent', fScheduledHours: 'Hours scheduled to work', fTrainingHours: 'Total training hours',
+    fPromoters: 'Promoters (9–10)', fPassives: 'Passives (7–8)', fDetractors: 'Detractors (0–6)',
+    saveMonth: 'Save month', clearForm: 'Clear form',
+    historyTitle: 'History',
+    historyHint: 'Your data is saved only in this browser. Export it as a backup, or to move it to another computer.',
+    nothingSaved: 'Nothing saved yet.',
+    edit: 'Edit', del: 'Delete', confirmDelete: 'Delete {m}?',
+    export: 'Export data (.json)', import: 'Import data',
+    confirmImport: 'Replace the current data with the imported file?',
+    badImport: 'That file doesn’t look like an export from this dashboard.',
+    errVol: 'Voluntary leavers cannot be more than total leavers.',
+    errSched: 'Enter hours scheduled so the absenteeism rate can be calculated.',
+    howTitle: 'How each KPI is calculated',
+    how: [
+      ['Average headcount', '(start + end) ÷ 2. This is the denominator for turnover and training rates.'],
+      ['Turnover rate', 'Total leavers ÷ average headcount × 100, for that month. Multiply by roughly 12 to get an annualised figure.'],
+      ['Voluntary turnover', 'Voluntary leavers ÷ average headcount × 100. This isolates resignations from dismissals, contract ends and retirements.'],
+      ['Time to hire', 'The average number of days you enter, from vacancy opened to offer accepted.'],
+      ['Absenteeism rate', 'Hours absent ÷ hours scheduled × 100. Decide once which absence types count (e.g. sick leave yes, holidays and statutory leave such as birth leave no) and keep that consistent.'],
+      ['eNPS', '% promoters − % detractors. Range −100 to +100.'],
+      ['Training hours / employee', 'Total training hours ÷ average headcount.'],
+      ['Change vs previous month', 'For rates, the change is shown in percentage points (pp): going from 2.0% to 2.5% is +0.5 pp.'],
+    ],
+    privacy: 'Enter aggregated numbers only, never names or individual data. Very small teams can make individuals identifiable even from totals (for example, one leaver in a team of four), so keep that in mind if you share the dashboard (GDPR / LOPDGDD).',
+  },
+  es: {
+    title: 'Panel de KPIs de RR. HH.',
+    subtitle: 'Indicadores mensuales de personas, calculados a partir de los datos que introduces.',
+    month: 'Mes',
+    kpi_headcount: 'Plantilla', kpi_turnover: 'Tasa de rotación', kpi_volTurnover: 'Rotación voluntaria',
+    kpi_timeToHire: 'Tiempo de contratación', kpi_absenteeism: 'Tasa de absentismo', kpi_enps: 'eNPS', kpi_training: 'Horas de formación / empleado',
+    days: 'días', day: 'día', pp: 'p. p.',
+    vs: 'vs.', noEarlier: 'Sin datos anteriores',
+    target: 'Objetivo', noTarget: 'Sin objetivo',
+    onTarget: 'Objetivo cumplido', offBy: '{d} fuera de objetivo',
+    atTarget: 'Según lo previsto',
+    emptyTitle: 'Aún no hay datos',
+    emptyText: 'Añade tu primer mes más abajo o carga seis meses de datos de ejemplo para ver cómo funciona el panel. Puedes borrarlos después.',
+    loadSample: 'Cargar datos de ejemplo',
+    trend: '{k}: evolución', trendHint: 'Haz clic en cualquier tarjeta para ver su gráfico.',
+    needTwo: 'Hacen falta al menos dos meses con este indicador para mostrar la evolución.',
+    legendActual: 'Real', legendTarget: 'Objetivo',
+    targetsTitle: 'Objetivos',
+    targetsHint: 'Fija la meta de cada indicador. Las tarjetas se ponen en verde si la cumples y en rojo si no. Déjalo en blanco si no hay objetivo. Para la plantilla, introduce la plantilla prevista; la diferencia se muestra sin color.',
+    saveTargets: 'Guardar objetivos', saved: 'Guardado ✓',
+    tMax: 'máx.', tMin: 'mín.', tPlan: 'previsto',
+    addMonth: 'Añadir un mes', editMonth: 'Editar {m}',
+    formHint: 'Introduce las cifras en bruto; el panel calcula las tasas. Si introduces un mes que ya existe, se sobrescribe.',
+    lgPeriod: 'Periodo', lgMovement: 'Plantilla y movimientos', lgAbsence: 'Absentismo y formación',
+    lgEnps: 'Encuesta eNPS (déjalo en blanco si este mes no hubo encuesta)',
+    fStartHC: 'Plantilla a inicio de mes', fEndHC: 'Plantilla a final de mes', fHires: 'Altas (nuevas incorporaciones)',
+    fLeavers: 'Bajas totales', fVolLeavers: '…de ellas, voluntarias',
+    fDaysToHire: 'Días medios de contratación (apertura de vacante → oferta aceptada)',
+    fAbsentHours: 'Horas de ausencia', fScheduledHours: 'Horas teóricas de trabajo', fTrainingHours: 'Horas totales de formación',
+    fPromoters: 'Promotores (9–10)', fPassives: 'Pasivos (7–8)', fDetractors: 'Detractores (0–6)',
+    saveMonth: 'Guardar mes', clearForm: 'Vaciar formulario',
+    historyTitle: 'Histórico',
+    historyHint: 'Los datos se guardan solo en este navegador. Expórtalos como copia de seguridad o para pasarlos a otro ordenador.',
+    nothingSaved: 'Todavía no hay nada guardado.',
+    edit: 'Editar', del: 'Borrar', confirmDelete: '¿Borrar {m}?',
+    export: 'Exportar datos (.json)', import: 'Importar datos',
+    confirmImport: '¿Sustituir los datos actuales por los del archivo importado?',
+    badImport: 'Ese archivo no parece una exportación de este panel.',
+    errVol: 'Las bajas voluntarias no pueden superar las bajas totales.',
+    errSched: 'Introduce las horas teóricas para poder calcular la tasa de absentismo.',
+    howTitle: 'Cómo se calcula cada indicador',
+    how: [
+      ['Plantilla media', '(inicio + final) ÷ 2. Es el denominador de la rotación y de las horas de formación.'],
+      ['Tasa de rotación', 'Bajas totales ÷ plantilla media × 100, en ese mes. Multiplica aproximadamente por 12 para obtener la cifra anualizada.'],
+      ['Rotación voluntaria', 'Bajas voluntarias ÷ plantilla media × 100. Separa las dimisiones de despidos, fin de contrato y jubilaciones.'],
+      ['Tiempo de contratación', 'La media de días que introduces, desde la apertura de la vacante hasta la aceptación de la oferta.'],
+      ['Tasa de absentismo', 'Horas de ausencia ÷ horas teóricas × 100. Decide una vez qué ausencias cuentan (p. ej., incapacidad temporal sí; vacaciones y permisos retribuidos del art. 37 ET, como el de nacimiento, no) y mantén el criterio.'],
+      ['eNPS', '% promotores − % detractores. Rango de −100 a +100.'],
+      ['Horas de formación / empleado', 'Horas totales de formación ÷ plantilla media.'],
+      ['Variación frente al mes anterior', 'En las tasas, la variación se muestra en puntos porcentuales (p. p.): pasar del 2,0 % al 2,5 % es +0,5 p. p.'],
+    ],
+    privacy: 'Introduce solo cifras agregadas, nunca nombres ni datos individuales. En equipos muy pequeños, incluso los totales pueden identificar a una persona (por ejemplo, una baja en un equipo de cuatro); tenlo en cuenta si compartes el panel (RGPD / LOPDGDD).',
+  },
+};
+
+// unit: '%' rates, 'days', 'h', '' plain. dir: true = higher is better, false = lower is better, null = neutral (plan)
 const KPIS = [
-  { id: 'headcount', label: 'Headcount', fmt: v => fmtNum(v, 0), higherIsBetter: null,
-    calc: e => e.endHC },
-  { id: 'turnover', label: 'Turnover rate', fmt: v => fmtNum(v, 1) + '%', higherIsBetter: false,
-    calc: e => avgHC(e) ? e.leavers / avgHC(e) * 100 : null },
-  { id: 'volTurnover', label: 'Voluntary turnover', fmt: v => fmtNum(v, 1) + '%', higherIsBetter: false,
-    calc: e => avgHC(e) ? e.volLeavers / avgHC(e) * 100 : null },
-  { id: 'timeToHire', label: 'Time to hire', fmt: v => fmtNum(v, 0) + ' days', higherIsBetter: false,
-    calc: e => e.daysToHire },
-  { id: 'absenteeism', label: 'Absenteeism rate', fmt: v => fmtNum(v, 1) + '%', higherIsBetter: false,
-    calc: e => e.scheduledHours ? e.absentHours / e.scheduledHours * 100 : null },
-  { id: 'enps', label: 'eNPS', fmt: v => (v > 0 ? '+' : '') + fmtNum(v, 0), higherIsBetter: true,
-    calc: e => {
+  { id: 'headcount', dec: 0, unit: '', dir: null, calc: e => e.endHC },
+  { id: 'turnover', dec: 1, unit: '%', dir: false, calc: e => avgHC(e) ? e.leavers / avgHC(e) * 100 : null },
+  { id: 'volTurnover', dec: 1, unit: '%', dir: false, calc: e => avgHC(e) ? e.volLeavers / avgHC(e) * 100 : null },
+  { id: 'timeToHire', dec: 0, unit: 'days', dir: false, calc: e => e.daysToHire },
+  { id: 'absenteeism', dec: 1, unit: '%', dir: false, calc: e => e.scheduledHours ? e.absentHours / e.scheduledHours * 100 : null },
+  { id: 'enps', dec: 0, unit: '', dir: true, signed: true, calc: e => {
       const total = (e.promoters ?? 0) + (e.passives ?? 0) + (e.detractors ?? 0);
       return total ? ((e.promoters ?? 0) - (e.detractors ?? 0)) / total * 100 : null;
     } },
-  { id: 'training', label: 'Training hrs / employee', fmt: v => fmtNum(v, 1) + ' h', higherIsBetter: true,
-    calc: e => avgHC(e) ? e.trainingHours / avgHC(e) : null },
+  { id: 'training', dec: 1, unit: 'h', dir: true, calc: e => avgHC(e) ? e.trainingHours / avgHC(e) : null },
 ];
 
 const NUM_FIELDS = ['startHC','endHC','hires','leavers','volLeavers','daysToHire','absentHours','scheduledHours','trainingHours','promoters','passives','detractors'];
 
-let entries = load();
+let lang = loadJSON(LANG_KEY, null) || ((navigator.language || '').toLowerCase().startsWith('es') ? 'es' : 'en');
+let entries = loadJSON(STORE_KEY, []);
+let targets = loadJSON(TARGET_KEY, {});
 let selectedMonth = entries.length ? entries[entries.length - 1].month : null;
 let selectedKpi = 'turnover';
+let editing = null;
 
+function t(key, vars) {
+  let s = T[lang][key] ?? T.en[key] ?? key;
+  if (vars) for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, v);
+  return s;
+}
+function loadJSON(key, fallback) {
+  try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch { return fallback; }
+}
+function saveJSON(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch {} }
+function locale() { return lang === 'es' ? 'es-ES' : 'en-GB'; }
 function avgHC(e) { return (e.startHC + e.endHC) / 2; }
-function fmtNum(v, d) { return v.toLocaleString('en-GB', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function num(v, d) { return v.toLocaleString(locale(), { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function unitStr(k, isDelta, v) {
+  if (k.unit === '%') return isDelta ? ' ' + t('pp') : (lang === 'es' ? ' %' : '%');
+  if (k.unit === 'days') return ' ' + t(v != null && Math.round(Math.abs(v)) === 1 ? 'day' : 'days');
+  if (k.unit === 'h') return ' h';
+  return '';
+}
+function fmt(k, v) { return (k.signed && v > 0 ? '+' : '') + num(v, k.dec) + unitStr(k, false, v); }
+function fmtDelta(k, d) { return num(Math.abs(d), k.dec) + unitStr(k, true, d); }
 function monthLabel(m, short) {
   const [y, mo] = m.split('-').map(Number);
-  return new Date(y, mo - 1, 1).toLocaleDateString('en-GB', short ? { month: 'short', year: '2-digit' } : { month: 'long', year: 'numeric' });
-}
-function load() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; } catch { return []; }
-}
-function save() {
-  entries.sort((a, b) => a.month.localeCompare(b.month));
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(entries)); } catch {}
+  return new Date(y, mo - 1, 1).toLocaleDateString(locale(), short ? { month: 'short', year: '2-digit' } : { month: 'long', year: 'numeric' });
 }
 function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c])); }
+function saveEntries() { entries.sort((a, b) => a.month.localeCompare(b.month)); saveJSON(STORE_KEY, entries); }
+
+// Returns {cls, text} describing the value against its target
+function targetStatus(k, v) {
+  const tg = targets[k.id];
+  if (tg == null || v == null) return null;
+  const d = v - tg;
+  if (k.dir === null) {
+    return { cls: 'flat', text: Math.abs(d) < 1e-9 ? t('atTarget') : `${d > 0 ? '+' : '−'}${fmtDelta(k, d)} ${t('vs')} ${t('tPlan')}` };
+  }
+  const met = k.dir ? v >= tg - 1e-9 : v <= tg + 1e-9;
+  return met ? { cls: 'good', text: '✓ ' + t('onTarget') } : { cls: 'bad', text: '✗ ' + t('offBy', { d: fmtDelta(k, d) }) };
+}
+
+function applyStaticText() {
+  document.documentElement.lang = lang;
+  document.title = t('title');
+  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+  document.getElementById('formTitle').textContent = editing ? t('editMonth', { m: monthLabel(editing) }) : t('addMonth');
+  document.getElementById('howList').innerHTML = T[lang].how.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('');
+  renderTargetFields();
+}
+
+function renderTargetFields() {
+  document.getElementById('targetFields').innerHTML = KPIS.map(k => {
+    const kind = k.dir === null ? t('tPlan') : k.dir ? t('tMin') : t('tMax');
+    const u = k.unit === '%' ? '%' : k.unit === 'days' ? t('days') : k.unit;
+    return `<label>${esc(t('kpi_' + k.id))} (${esc(kind)}${u ? ', ' + esc(u) : ''})
+      <input type="number" step="any" name="${k.id}" value="${targets[k.id] ?? ''}"${k.id === 'enps' ? ' min="-100" max="100"' : ' min="0"'}></label>`;
+  }).join('');
+}
 
 function render() {
   const app = document.getElementById('app');
@@ -267,17 +441,16 @@ function render() {
   if (!entries.length) {
     pick.hidden = true;
     app.innerHTML = `<section class="panel empty">
-      <h2>No data yet</h2>
-      <p>Add your first month below, or load six months of sample data to see how the dashboard works. You can delete the sample data later.</p>
-      <button class="primary" id="sampleBtn">Load sample data</button></section>`;
+      <h2>${esc(t('emptyTitle'))}</h2>
+      <p>${esc(t('emptyText'))}</p>
+      <button class="primary" id="sampleBtn">${esc(t('loadSample'))}</button></section>`;
     document.getElementById('sampleBtn').onclick = loadSample;
     renderHistory();
     return;
   }
   pick.hidden = false;
-  const sel = document.getElementById('monthSelect');
-  sel.innerHTML = entries.slice().reverse().map(e =>
-    `<option value="${e.month}" ${e.month === selectedMonth ? 'selected' : ''}>${monthLabel(e.month)}</option>`).join('');
+  document.getElementById('monthSelect').innerHTML = entries.slice().reverse().map(e =>
+    `<option value="${e.month}" ${e.month === selectedMonth ? 'selected' : ''}>${esc(monthLabel(e.month))}</option>`).join('');
 
   const idx = entries.findIndex(e => e.month === selectedMonth);
   const cur = entries[idx];
@@ -287,27 +460,29 @@ function render() {
     // Compare with the most recent earlier month that has this KPI (eNPS surveys aren't monthly)
     const prev = entries.slice(0, idx).reverse().find(e => k.calc(e) != null);
     const pv = prev ? k.calc(prev) : null;
-    let delta = '<span class="delta flat">No earlier data</span>';
+    let delta = `<span class="delta flat">${esc(t('noEarlier'))}</span>`;
     if (v != null && pv != null) {
       const d = v - pv;
       let cls = 'flat';
-      if (Math.abs(d) > 1e-9 && k.higherIsBetter !== null) cls = (d > 0) === k.higherIsBetter ? 'good' : 'bad';
+      if (Math.abs(d) > 1e-9 && k.dir !== null) cls = (d > 0) === k.dir ? 'good' : 'bad';
       const arrow = d > 0 ? '▲' : d < 0 ? '▼' : '■';
-      // Differences between rates are percentage points, not percent
-      const unit = k.fmt(Math.abs(d)).replace(/^\+/, '').replace(/%$/, ' pp');
-      delta = `<span class="delta ${cls}">${arrow} ${unit} vs ${monthLabel(prev.month, true)}</span>`;
+      delta = `<span class="delta ${cls}">${arrow} ${esc(fmtDelta(k, d))} ${esc(t('vs'))} ${esc(monthLabel(prev.month, true))}</span>`;
     }
+    const st = targetStatus(k, v);
+    const tgt = targets[k.id] == null
+      ? `<span class="tgt">${esc(t('noTarget'))}</span>`
+      : `<span class="tgt">${esc(t('target'))}: ${esc(fmt(k, targets[k.id]))}${st ? ` · <span class="pill ${st.cls}">${esc(st.text)}</span>` : ''}</span>`;
     return `<button class="card ${k.id === selectedKpi ? 'active' : ''}" data-kpi="${k.id}" aria-pressed="${k.id === selectedKpi}">
-      <div class="label">${k.label}</div>
-      <div class="value">${v == null ? '—' : k.fmt(v)}</div>
-      ${delta}</button>`;
+      <span class="label">${esc(t('kpi_' + k.id))}</span>
+      <span class="value">${v == null ? '—' : esc(fmt(k, v))}</span>
+      ${delta}${tgt}</button>`;
   }).join('');
 
   const kpi = KPIS.find(k => k.id === selectedKpi);
   app.innerHTML = `<div class="grid">${cards}</div>
     <section class="panel chart">
-      <h2>${kpi.label}: trend</h2>
-      <p class="hint">Click any KPI card to chart it.</p>
+      <h2>${esc(t('trend', { k: t('kpi_' + kpi.id) }))}</h2>
+      <p class="hint">${esc(t('trendHint'))}</p>
       ${chart(kpi)}
     </section>`;
   app.querySelectorAll('.card').forEach(b => b.onclick = () => { selectedKpi = b.dataset.kpi; render(); });
@@ -316,36 +491,43 @@ function render() {
 
 function chart(kpi) {
   const pts = entries.map(e => ({ m: e.month, v: kpi.calc(e) })).filter(p => p.v != null);
-  if (pts.length < 2) return '<p class="hint">You need at least two months with this KPI to show a trend.</p>';
-  const W = 800, H = 240, L = 52, R = 28, T = 16, B = 28;
-  let min = Math.min(...pts.map(p => p.v)), max = Math.max(...pts.map(p => p.v));
+  if (pts.length < 2) return `<p class="hint">${esc(t('needTwo'))}</p>`;
+  const tg = targets[kpi.id];
+  const W = 800, H = 240, L = 56, R = 28, T0 = 16, B = 28;
+  const vals = pts.map(p => p.v).concat(tg != null ? [tg] : []);
+  let min = Math.min(...vals), max = Math.max(...vals);
   if (min === max) { min -= 1; max += 1; }
   const pad = (max - min) * 0.15; min -= pad; max += pad;
   if (kpi.id !== 'enps' && min < 0) min = 0;
   const x = i => L + i * (W - L - R) / (pts.length - 1);
-  const y = v => T + (1 - (v - min) / (max - min)) * (H - T - B);
-  const ticks = [0, 0.5, 1].map(t => min + t * (max - min));
-  const grid = ticks.map(t => `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--border)"/>
-    <text x="${L - 8}" y="${y(t) + 4}" text-anchor="end">${esc(kpi.fmt(t).replace(' days','d').replace(' h','h'))}</text>`).join('');
+  const y = v => T0 + (1 - (v - min) / (max - min)) * (H - T0 - B);
+  const short = v => num(v, kpi.dec) + (kpi.unit === '%' ? '%' : kpi.unit === 'days' ? 'd' : kpi.unit);
+  const grid = [0, 0.5, 1].map(f => min + f * (max - min)).map(v => `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--border)"/>
+    <text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${esc(short(v))}</text>`).join('');
+  const tline = tg != null ? `<line x1="${L}" x2="${W - R}" y1="${y(tg)}" y2="${y(tg)}" stroke="var(--target)" stroke-width="2" stroke-dasharray="6 5"><title>${esc(t('target'))}: ${esc(fmt(kpi, tg))}</title></line>` : '';
   const path = pts.map((p, i) => `${i ? 'L' : 'M'}${x(i)},${y(p.v)}`).join(' ');
-  const dots = pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.v)}" r="${p.m === selectedMonth ? 5 : 3.5}" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"><title>${monthLabel(p.m)}: ${esc(kpi.fmt(p.v))}</title></circle>
-    <text x="${x(i)}" y="${H - 8}" text-anchor="middle">${monthLabel(p.m, true)}</text>`).join('');
-  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(kpi.label)} by month">${grid}
-    <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5" vector-effect="non-scaling-stroke"/>${dots}</svg>`;
+  const dots = pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.v)}" r="${p.m === selectedMonth ? 5.5 : 4}" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"><title>${esc(monthLabel(p.m))}: ${esc(fmt(kpi, p.v))}</title></circle>
+    <text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(monthLabel(p.m, true))}</text>`).join('');
+  const legend = `<div class="legend"><span>${esc(t('legendActual'))}</span>${tg != null ? `<span class="t">${esc(t('legendTarget'))}</span>` : ''}</div>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(t('trend', { k: t('kpi_' + kpi.id) }))}">${grid}${tline}
+    <path d="${path}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>${dots}</svg>${legend}`;
 }
 
 function renderHistory() {
   const el = document.getElementById('history');
-  if (!entries.length) { el.innerHTML = '<p class="hint">Nothing saved yet.</p>'; return; }
-  const cols = KPIS.map(k => `<th>${k.label}</th>`).join('');
-  const rows = entries.slice().reverse().map(e => `<tr><td>${monthLabel(e.month)}</td>
-    ${KPIS.map(k => { const v = k.calc(e); return `<td>${v == null ? '—' : k.fmt(v)}</td>`; }).join('')}
-    <td><button class="link" data-edit="${e.month}">Edit</button><button class="link" data-del="${e.month}">Delete</button></td></tr>`).join('');
-  el.innerHTML = `<table><thead><tr><th>Month</th>${cols}<th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  if (!entries.length) { el.innerHTML = `<p class="hint">${esc(t('nothingSaved'))}</p>`; return; }
+  const cols = KPIS.map(k => `<th>${esc(t('kpi_' + k.id))}</th>`).join('');
+  const rows = entries.slice().reverse().map(e => `<tr><td>${esc(monthLabel(e.month))}</td>
+    ${KPIS.map(k => {
+      const v = k.calc(e); const st = targetStatus(k, v);
+      return `<td class="${st && st.cls !== 'flat' ? st.cls : ''}">${v == null ? '—' : esc(fmt(k, v))}</td>`;
+    }).join('')}
+    <td><button class="link" data-edit="${e.month}">${esc(t('edit'))}</button><button class="link danger" data-del="${e.month}">${esc(t('del'))}</button></td></tr>`).join('');
+  el.innerHTML = `<table><thead><tr><th>${esc(t('month'))}</th>${cols}<th></th></tr></thead><tbody>${rows}</tbody></table>`;
   el.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
-    if (!confirm(`Delete ${monthLabel(b.dataset.del)}?`)) return;
+    if (!confirm(t('confirmDelete', { m: monthLabel(b.dataset.del) }))) return;
     entries = entries.filter(e => e.month !== b.dataset.del);
-    save();
+    saveEntries();
     if (selectedMonth === b.dataset.del) selectedMonth = entries.length ? entries[entries.length - 1].month : null;
     render();
   });
@@ -357,7 +539,8 @@ function editMonth(m) {
   const f = document.getElementById('entryForm');
   f.month.value = e.month;
   NUM_FIELDS.forEach(n => f[n].value = e[n] ?? '');
-  document.getElementById('formTitle').textContent = `Edit ${monthLabel(m)}`;
+  editing = m;
+  document.getElementById('formTitle').textContent = t('editMonth', { m: monthLabel(m) });
   f.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -367,24 +550,39 @@ document.getElementById('entryForm').addEventListener('submit', ev => {
   const e = { month: f.month.value };
   NUM_FIELDS.forEach(n => { const v = f[n].value; e[n] = v === '' ? null : Number(v); });
   ['hires','leavers','volLeavers','absentHours','trainingHours'].forEach(n => e[n] ??= 0);
-  if (e.volLeavers > e.leavers) { alert('Voluntary leavers cannot be more than total leavers.'); return; }
-  if (e.absentHours && !e.scheduledHours) { alert('Enter hours scheduled so the absenteeism rate can be calculated.'); return; }
+  if (e.volLeavers > e.leavers) { alert(t('errVol')); return; }
+  if (e.absentHours && !e.scheduledHours) { alert(t('errSched')); return; }
   entries = entries.filter(x => x.month !== e.month).concat(e);
-  save();
+  saveEntries();
   selectedMonth = e.month;
   f.reset();
-  document.getElementById('formTitle').textContent = 'Add a month';
   render();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 document.getElementById('entryForm').addEventListener('reset', () => {
-  document.getElementById('formTitle').textContent = 'Add a month';
+  editing = null;
+  document.getElementById('formTitle').textContent = t('addMonth');
+});
+
+document.getElementById('targetsForm').addEventListener('submit', ev => {
+  ev.preventDefault();
+  const f = ev.target;
+  targets = {};
+  KPIS.forEach(k => { const v = f[k.id].value; if (v !== '') targets[k.id] = Number(v); });
+  saveJSON(TARGET_KEY, targets);
+  const s = document.getElementById('targetsSaved');
+  s.hidden = false; setTimeout(() => s.hidden = true, 2000);
+  render();
 });
 
 document.getElementById('monthSelect').onchange = ev => { selectedMonth = ev.target.value; render(); };
+document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => {
+  lang = b.dataset.lang; saveJSON(LANG_KEY, lang);
+  applyStaticText(); render();
+});
 
 document.getElementById('exportBtn').onclick = () => {
-  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+  const blob = new Blob([JSON.stringify({ entries, targets }, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `hr-kpis-${new Date().toISOString().slice(0, 10)}.json`;
@@ -397,12 +595,15 @@ document.getElementById('importFile').onchange = async ev => {
   if (!file) return;
   try {
     const data = JSON.parse(await file.text());
-    if (!Array.isArray(data) || !data.every(d => /^\d{4}-\d{2}$/.test(d.month))) throw new Error();
-    if (entries.length && !confirm('Replace the current data with the imported file?')) return;
-    entries = data; save();
+    // Accept both the current {entries, targets} format and the earlier plain-array export
+    const list = Array.isArray(data) ? data : data.entries;
+    if (!Array.isArray(list) || !list.every(d => /^\d{4}-\d{2}$/.test(d.month))) throw new Error();
+    if (entries.length && !confirm(t('confirmImport'))) return;
+    entries = list; saveEntries();
+    if (!Array.isArray(data) && data.targets) { targets = data.targets; saveJSON(TARGET_KEY, targets); renderTargetFields(); }
     selectedMonth = entries.length ? entries[entries.length - 1].month : null;
     render();
-  } catch { alert('That file doesn’t look like an export from this dashboard.'); }
+  } catch { alert(t('badImport')); }
   ev.target.value = '';
 };
 
@@ -422,11 +623,18 @@ function loadSample() {
     NUM_FIELDS.forEach((n, j) => e[n] = r[j]);
     return e;
   });
-  save();
+  saveEntries();
+  // Example targets only if the user hasn't set their own
+  if (!Object.keys(targets).length) {
+    targets = { headcount: 132, turnover: 2, volTurnover: 1, timeToHire: 30, absenteeism: 2.5, enps: 30, training: 2 };
+    saveJSON(TARGET_KEY, targets);
+    renderTargetFields();
+  }
   selectedMonth = entries[entries.length - 1].month;
   render();
 }
 
+applyStaticText();
 render();
 </script>
 </body>
